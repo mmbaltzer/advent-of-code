@@ -132,6 +132,47 @@ def can_be_made_safe(report):
 ```
 You don't have to try removing every level in the report: you need only try removing the two levels involved in the *first* safety violation. If that does not make the report safe, nothing will. That solution is provided in [day02.py](day02.py).
 
+## Day 03
+#### Part One
+This problem instructs you to find sequences of characters within a long string of characters. From those sequences, you need to extract two values and multiply them together.
+
+The memory input is best kept in a string as it is alphanumeric. `regex` is a good tool for finding a pattern within a string.
+
+First, determine the regex pattern of the sequence you are looking for. Use a tool like [regexr.com](regexr.com) or even an LLM. Use capturing groups to extract the values to be multiplied.
+
+Now you can find all the instances that match your input pattern, multiply them, and sum those products.
+
+```python
+def pt_1(memory: str) -> int:
+    regex_instructions = r'mul\((\d{1,3}),(\d{1,3})\)'
+    instructions = re.findall(regex_instructions, memory)
+
+    products = [int(a) * int(b) for a, b in instructions]
+    return sum(products)
+```
+
+#### Part Two
+Now there are three kinds of sequences to find in the memory string; use the regex OR `|` operator to find any of the three strings.
+
+Once you have extracted the instructions from the memory string, you need to check which of the multiply operations to perform and which to skip. Loop over all the instructions, keeping a state variable to track whether `do()` or `dont()` was the most recently seen instruction.
+
+```python
+def interpret_instructions(instructions: List[str]) -> int:
+    do_mul = True
+    total = 0
+    for instruction in instructions:
+        # instruction is a mul instruction
+        if instruction[0] and do_mul:
+            total += int(instruction[0]) * int(instruction[1])
+        # instruction matches "do()"
+        elif instruction[2]: 
+            do_mul = True
+        # instruction matches "don't()"
+        elif instruction[3]:
+            do_mul = False
+    return total
+```
+
 # Appendix
 ## Getting Started
 The first step to solving all Advent of Code challenges is to store a variable with the puzzle input. It is possible to paste the input directly into a variable assignment,
