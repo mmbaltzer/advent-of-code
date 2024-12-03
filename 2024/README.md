@@ -130,8 +130,7 @@ def can_be_made_safe(report):
     # Removing any one level did not make the report safe
     return False
 ```
-You don't have to try removing every level: if there are more than two level jumps that violate the safety conditions, it is not possible to make the report safe.
-For any report with one safety violation, you need only try removing the two levels involved. That solution is provided in [day02.py](day02.py).
+You don't have to try removing every level in the report: you need only try removing the two levels involved in the *first* safety violation. If that does not make the report safe, nothing will. That solution is provided in [day02.py](day02.py).
 
 # Appendix
 ## Getting Started
