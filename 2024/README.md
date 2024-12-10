@@ -173,6 +173,119 @@ def interpret_instructions(instructions: List[str]) -> int:
     return total
 ```
 
+<!-- ## Day 04
+#### Part One
+```python
+# Check right
+if in_bounds(arr,i,j+3):
+    search = [arr[i][j+k] for k in range(4)]
+    if search == word:
+        total += 1
+```
+This pattern can be repeated eight times in order to check each possible word orientation.
+
+This does result in repetitive code, though it is quick to read. A less repetive solution is to parametrize the directions to check by creating a list of directions
+```python
+directions = [[0, 1], [0, -1], [-1, 0], [1, 0],   # right, left, up, down
+              [1, 1], [1, -1], [-1, 1], [-1, -1]] # down-right, down-left, up-right, up-left
+```
+
+#### Part Two -->
+
+## Day 10
+#### Part One
+The problem asks you to find the number of valid trails in a map. A trail starts at 0 and increases monotonically by one until it is height 9, its peak. You are asked for a trail score calculated using the number of peaks that can be reached from each trailhead.
+
+This is a search problem in two dimensions: you are asked to find paths through a 2-dimensional space.
+
+For this problem, we can use an integer array to store the topographical map. This will be helpful in accessing specific coordinates in the map and comparing the values of adjacent locations.
+
+Knowing the above, we can begin writing the solution. As with every problem, we must write some code to parse the input text into our desired data structure. See `parse_input()` in [day10.py](day10.py).
+
+From the problem, we are asked to find the trails for each trailhead in order to calculate their scores. We can begin to write out the structure of the solution as follows:
+```python
+def pt_1(topo_map) -> int:
+    trailheads = get_trailheads(topo_map)
+    trail_peaks = [get_trails_for_trailhead(topo_map, head) for head in trailheads]
+    ...
+```
+These two methods will have the bulk of code, so let's implement them next. In order to get the trailheads, we can loop over every element of the topographic map and check if it is equal to zero. We need to store the coordinates of the trailheads so that we can use them as the starting points of our trail searches.
+```python
+def get_trailheads(topo_map):
+    trailheads = []
+    for i in range(len(topo_map)):
+        for j in range(len(topo_map[i])):
+            if topo_map[i][j] == 0:
+                trailheads.append((i, j))
+    return trailheads
+
+def test_get_trailheads():
+    topo = parse_input("input/day10_example.txt")
+    trailheads = get_trailheads(topo)
+    expected = [(0, 2), (0, 4), (2, 4), (4, 6), (5, 2), (5, 5), (6, 0), (6, 6), (7, 1)]
+    assert trailheads == expected
+```
+At the solutions become more complex, unit testing the functions becomes very useful. I included a test that uses the example input.
+
+`get_trails_for_trailhead` is a path searching function. The input, a topographical map, can be modeled as a graph data structure, where each level is a node and there are up to four branches (left, right, up, down). The most common algorithms for searching a graph is breadth-first search and depth-first search. To implement a breadth-first search, we start at the root of our graph (the trailhead), and add each of the possible directions to walk to a queue of locations "to-visit". Then we take the location at the top of the queue, find the possible directions from *that* spot, and add the possibilities to the queue. We need to check each node that is taken off the queue to see if it is the destination we are trying to reach.
+
+```python
+def get_trails_for_trailhead(topo_map, trailhead):
+    peaks = []
+    to_visit = [trailhead]
+
+    while to_visit:
+        x, y = to_visit.pop(0)
+        # If this is a peak, add it to the list of peaks
+        if topo_map[x][y] == 9:
+            peaks.append((x,y))
+            continue
+            
+        # Check each direction for a neighbor that is 1 higher
+        directions = [(0, 1), 
+                      (1, 0), 
+                      (0, -1), 
+                      (-1, 0)]
+        for dx, dy in directions:
+            neighbor = topo_map[x+dx][y+dy] if in_bounds(topo_map, x+dx, y+dy) else -1
+            
+            # If the neighbor is 1 higher, add it to the list of places to visit
+            if neighbor - topo_map[x][y] == 1:
+                to_visit.append((x+dx, y+dy))
+    
+    return peaks
+```
+
+Though we are thinking about this map as a graph, we do not need to worry about cycles because of the constraint that the path increase by 1 at each position. This makes loops in the path impossible.
+
+With these functions implemented, we can finish by calculating the score for each trailhead. Note that in the searching function, the coordinates of hte peak are added to a list, but they might be added more than once if there is more than one path to the peak. To account for this, we can create a set of the peak coordinates, and find the length of the set when calculating the score.
+
+```python
+def pt_1(topo_map):
+    trailheads = get_trailheads(topo_map)
+
+    trail_peaks = [get_trails_for_trailhead(topo_map, head) for head in trailheads]
+    trailhead_scores = [len(set(peaks)) for peaks in trail_peaks]
+
+    return sum(trailhead_scores)
+```
+
+#### Part Two
+In part two, the score calculation has changed slightly. In part one, the score of a trailhead was equal to the number of peaks you could reach from it. In part two, the score of a trailhead is the number of paths to peaks you can take.
+
+The solution in Part One is already structured to return a list of paths to peaks from the BFS function. So we only need to remove the set operation in order to calculate this new score.
+
+```python
+
+def pt_2(topo_map):
+    trailheads = get_trailheads(topo_map)
+
+    trail_peaks = [get_trails_for_trailhead(topo_map, head) for head in trailheads]
+    trailhead_scores = [len(peaks) for peaks in trail_peaks]
+
+    return sum(trailhead_scores)
+```
+
 # Appendix
 ## Getting Started
 The first step to solving all Advent of Code challenges is to store a variable with the puzzle input. It is possible to paste the input directly into a variable assignment,
